@@ -1,0 +1,1495 @@
+{
+  "name": "Lesson 6",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -576
+      ],
+      "id": "15f14063-3c07-4dbd-900f-b5d344c4cca1",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0",
+          "mode": "list",
+          "cachedResultName": "Lesson_6_Candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "verdict"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        400,
+        -576
+      ],
+      "id": "c9645bac-5bb5-457c-bc75-1c3111fe54a1",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "51rukaxrOWQg284c",
+          "name": "Google Sheets bazasklad_makecomcred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "https://docs.google.com/document/d/1vqj1HE4LMkHKdiF2Qi5OwYcLVW4Be_WofAN5lfqYXQw/edit?tab=t.0"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -576
+      ],
+      "id": "088724fa-43bb-432c-b8d8-bfaa4e7cdb41",
+      "name": "Get a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "8Wk0AO4V3zPgWodI",
+          "name": "Google Docs account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        848,
+        -576
+      ],
+      "id": "1db4d0ad-7dc2-4fff-a623-5d8ade9489a6",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.apify.com/v2/actors/harvestapi~linkedin-profile-scraper/run-sync-get-dataset-items?token=apify_api_sryB1f49a4ZNjk1dOowaFPlfYNhfSE2UWTVs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"profileScraperMode\": \"Profile details no email ($4 per 1k)\",\n    \"queries\": [\n        \"{{ $json.linkedin }}\"\n    ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        -688
+      ],
+      "id": "87fe581b-6ffe-446b-85cd-6226b1098c9b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ти - досвідчений технічний рекрутер. Оціни ОДНОГО кандидата проти ОДНІЄЇ вакансії і поверни СТРОГО JSON.\n\nВАКАНСІЯ (опис ролі):\n{{ $('Get a document').item.json.content }}\n\nПРОФІЛЬ КАНДИДАТА (JSON з LinkedIn):\n{{ JSON.stringify($json) }}\n\nЗАВДАННЯ\n1. Виведи РІВНО 5 критеріїв найму прямо з опису вакансії (обовʼязкові навички, роки досвіду, домен, рівень, локація). Кожному признач вагу 0-1; сума ваг = 1.0. Must-have - найбільша вага.\n2. По кожному критерію постав бал 0-10 на основі ТІЛЬКИ профілю. На кожен бал додай дослівну цитату-доказ із профілю (поле about, headline, experience, skills). Немає доказу → бал 0 і цитата \"доказів не знайдено\". НІКОЛИ не вигадуй досвід, якого немає в JSON.\n3. Читай СМИСЛ, не ключові слова: \"розробляв на Пайтоні\" = Python-досвід.\n4. Must-have не закрито → це ВІДСІВ, жорстко занижуй загальний бал, а не \"майже підходить\".\n5. Порахуй загальний бал fit = round(сума(вага × бал) × 10), ціле 0-100.\n\n\nПОВЕРНИ СТРОГО ТАКИЙ JSON (без зайвого тексту, без markdown):\n{\n  \"fit\": 0-100,\n  \"verdict\": \"ЗАПРОСИТИ | МОЖЛИВО | ВІДСІВ\",\n  \"reason\": \"5 критеріїв через крапку з комою, кожен у форматі: Критерій (вага%) - бал/10 - цитата-доказ\",\n  \"account_data\": \"імʼя + headline + поточна посада + локація + ключові навички, одним рядком\"\n}\n\nПРАВИЛА ВЕРДИКТУ: ЗАПРОСИТИ якщо fit >= 70 і всі must-have закриті; МОЖЛИВО якщо fit 50-69; ВІДСІВ якщо fit < 50 або провалив must-have.\n",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1296,
+        -800
+      ],
+      "id": "4f8fa6be-6819-4132-a23a-3c9836aac3f8",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5-nano",
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        -576
+      ],
+      "id": "113a5565-aabd-41cc-967f-2d1f4ef21fe1",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3MkDZC34JPQxExFG",
+          "name": "Boxa"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0",
+          "mode": "list",
+          "cachedResultName": "Lesson_6_Candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop Over Items').item.json.row_number }}",
+            "message": "={{ $json.message }}",
+            "fit": "={{ $('Basic LLM Chain').item.json.output.fit }}",
+            "verdict": "={{ $('Basic LLM Chain').item.json.output.verdict }}",
+            "reason": "={{ $('Basic LLM Chain').item.json.output.reason }}",
+            "account_data": "={{ JSON.stringify($('HTTP Request').item.json) }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "linkedin",
+              "displayName": "linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "account_data",
+              "displayName": "account_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fit",
+              "displayName": "fit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "verdict",
+              "displayName": "verdict",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2000,
+        -576
+      ],
+      "id": "bbf18757-67f8-4f78-91ad-4212cd22211a",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "51rukaxrOWQg284c",
+          "name": "Google Sheets bazasklad_makecomcred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Перевірка резюме",
+        "height": 560,
+        "width": 2340
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -96,
+        -928
+      ],
+      "typeVersion": 1,
+      "id": "64b05050-1e88-44b3-830d-823b73ccf165",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ти пишеш коротке повідомлення кандидату від імені компанії Profigent. Це перший дотик у LinkedIn. Має бути ярко, тепло і просто - як пише жива людина, а не HR-бот.\n\nВХІД\nПрофіль кандидата (JSON):\n{{ JSON.stringify($json) }}\n\nОцінка кандидата (з попереднього кроку):\nfit: {{ $json.fit }}\nсильні сторони: {{ $json.reason }}\n\nЗАВДАННЯ\nНапиши повідомлення кандидату на основі ОДНІЄЇ конкретної сильної сторони з його профілю.\n\nСТРУКТУРА (4 короткі частини):\n1. Привітання + хто ми: \"Привіт, [Імʼя]! Це [твоє імʼя] з Profigent.\"\n2. Конкретний комплімент - зачепись за РЕАЛЬНУ деталь із профілю (проєкт, цифру, досвід), не загальну воду. Покажи, що читав профіль, а не розсилаєш шаблон.\n3. Чому пишемо: коротко звʼяжи його сильну сторону з роллю, яку шукаємо.\n4. Мʼякий заклик: запроси на коротку 15-хв розмову, питанням на яке легко сказати \"так\".\n\nПРАВИЛА\n- Жива розмовна мова, ніби пишеш знайомому. Тепло, але без підлабузництва.\n- ОДИН конкретний факт із профілю - не перелік усього.\n- Без тире (тільки дефіс з пробілами). Без емодзі. Без канцеляризмів (\"в рамках\", \"здійснити\", \"комунікація\").\n- До 70 слів. Коротше = краще.\n- Не обіцяй роботу і не кажи \"ти ідеально підходиш\" прямим текстом - покажи інтерес, а не вирок.\n- Мовою профілю кандидата (англ. профіль → англ. повідомлення).\n\nПОВЕРНИ СТРОГО JSON:\n{\n  \"message\": \"готовий текст повідомлення\"\n}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1648,
+        -800
+      ],
+      "id": "40fffdb6-d576-40f3-8562-2d7d832a6c3a",
+      "name": "Basic LLM Chain3"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5-nano",
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        -576
+      ],
+      "id": "598f9fb1-4801-42c9-8b99-8e2d09d0e1ef",
+      "name": "OpenRouter Chat Model3",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3MkDZC34JPQxExFG",
+          "name": "Boxa"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"fit\": 90,\n\t\"verdict\": \"запросити\",\n  \"reason\":\"підходе по всіх крітеріяї\",\n  \"account_data\":\"Jeremiah Calica — Ghostwriter for B2B founders & CEOs — Copywriter (Freelance) — Philippines — Copywriting; Ghostwriting; Content Strategy; Lead Generation; Marketing\"\n  \n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1440,
+        -576
+      ],
+      "id": "b082090c-b57e-43bf-9e1f-3a167de4b370",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        624,
+        -576
+      ],
+      "id": "e849784d-6823-477b-8e68-0b80dceb3dda",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "content": "## Воронка 2 - Signal Outreach (зміна роботи)\nРаз на тиждень rescrape профілів з тієї ж таблиці. Якщо компанія змінилась - агент пише привітання і ставить статус. Той самий мозок, додано Schedule + IF (стара vs нова компанія).",
+        "height": 620,
+        "width": 2340,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -272
+      ],
+      "typeVersion": 1,
+      "id": "b5849aab-64b1-41b6-83ce-3cbed7afce7b",
+      "name": "Sticky Note Funnel 2"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -16,
+        96
+      ],
+      "id": "0940bf9d-70b2-4bb3-9e7d-56a276bc401c",
+      "name": "Schedule (раз на тиждень)"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0",
+          "mode": "list",
+          "cachedResultName": "Lesson_6_Candidates"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1685886503,
+          "mode": "list",
+          "cachedResultName": "2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0/edit#gid=1685886503"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "message"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        208,
+        96
+      ],
+      "id": "68ab8b0b-3187-4b64-8e83-48a483bea792",
+      "name": "Get leads (funnel 2)",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "51rukaxrOWQg284c",
+          "name": "Google Sheets bazasklad_makecomcred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        656,
+        96
+      ],
+      "id": "d4487ced-f643-4e61-ac01-202290088589",
+      "name": "Loop leads (funnel 2)"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.apify.com/v2/actors/harvestapi~linkedin-profile-scraper/run-sync-get-dataset-items?token=apify_api_sryB1f49a4ZNjk1dOowaFPlfYNhfSE2UWTVs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"profileScraperMode\": \"Profile details no email ($4 per 1k)\",\n    \"queries\": [\n        \"{{ $json.linkedin }}\"\n    ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        880,
+        -64
+      ],
+      "id": "a2ef1a9e-2841-4d23-b473-9928f9cdcc36",
+      "name": "Rescrape profile (funnel 2)"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cmp-company-changed",
+              "leftValue": "={{ $json.currentPosition?.[0]?.companyName || $json.experience?.[0]?.companyName || '' }}",
+              "rightValue": "={{ $('Loop leads (funnel 2)').item.json.company_old || '' }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1104,
+        16
+      ],
+      "id": "6a37a45a-565a-4c6b-a7a9-81099700f212",
+      "name": "IF company changed"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ти пишеш коротке привітання кандидату від імені компанії Profigent. Привід: він щойно змінив роботу. Це теплий перший дотик, НЕ пітч.\n\nПРОФІЛЬ (JSON):\n{{ JSON.stringify( $('Rescrape profile (funnel 2)').item.json) }}\n\nСтара компанія: {{ $('Loop leads (funnel 2)').item.json['old-company'] }}\nНова компанія: {{ $('Rescrape profile (funnel 2)').item.json.experience[0].companyName }}\n\nЗАВДАННЯ\nНапиши коротке привітання (до 50 слів):\n1. Привітай зі зміною ролі, назви нову компанію.\n2. Зачепись за ОДНУ реальну деталь з профілю.\n3. Легке відкрите питання (як вживається на новому місці) - щоб легко відповісти.\nБЕЗ пітчу, без продажу. Просто тепло і по-людськи.\n\nПРАВИЛА: жива мова, без тире (тільки дефіс з пробілами), без емодзі, мовою профілю.\n\nПОВЕРНИ СТРОГО JSON:\n{ \"message\": \"текст привітання\" }",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1552,
+        -96
+      ],
+      "id": "a94a9921-fcfb-4668-a4fa-e7e561d835c5",
+      "name": "Write congrats (funnel 2)"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5-nano",
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1568,
+        128
+      ],
+      "id": "73fe6b5d-80ae-4cf9-b519-9fd9bb653ecb",
+      "name": "OpenRouter (funnel 2)",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3MkDZC34JPQxExFG",
+          "name": "Boxa"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0",
+          "mode": "list",
+          "cachedResultName": "Lesson_6_Candidates"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1685886503,
+          "mode": "list",
+          "cachedResultName": "2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0/edit#gid=1685886503"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop leads (funnel 2)').item.json.row_number }}",
+            "message": "={{ $json.output.message }}",
+            "signal": "={{ $('Edit Fields').item.json.signal }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "linkedin",
+              "displayName": "linkedin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "account_data",
+              "displayName": "account_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "old-company",
+              "displayName": "old-company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "signal",
+              "displayName": "signal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1904,
+        144
+      ],
+      "id": "5fe7e34b-d88b-4431-a38b-e804d863b47d",
+      "name": "Update signal (funnel 2)",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "51rukaxrOWQg284c",
+          "name": "Google Sheets bazasklad_makecomcred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Воронка 3 - Сортування резюме з PDF (Google Drive)\nКладеш PDF у папку Drive - workflow тягне файл, дістає текст, проганяє той самий скоринг, дописує рядок у таблицю. Найслабша ланка - якість PDF (багатоколонкові ламаються), не AI.",
+        "height": 640,
+        "width": 2516,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        656
+      ],
+      "typeVersion": 1,
+      "id": "ccc53a3c-714c-422d-83c8-a02143c4757a",
+      "name": "Sticky Note Funnel 3"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        1008
+      ],
+      "id": "ea3cc0c9-ce44-4f92-9472-8c9ce13c6ed5",
+      "name": "Schedule (funnel 3)"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "=",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "1cICNEVkg5pmVnZsT1mk4yYHkAVCAeDH9",
+            "mode": "id"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        416,
+        1008
+      ],
+      "id": "3ff95f74-ca6b-4491-b2ac-db3c9997df15",
+      "name": "List PDFs in folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "9xCdmskLThtz3GWC",
+          "name": "bazasklad3g makecomcred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        864,
+        1008
+      ],
+      "id": "c7abc7ba-ac13-40a7-91aa-07ca65e6d1fd",
+      "name": "Loop CVs (funnel 3)"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        880
+      ],
+      "id": "b736c7a4-1197-47a2-be79-f77ea3e86ef6",
+      "name": "Download CV",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "9xCdmskLThtz3GWC",
+          "name": "bazasklad3g makecomcred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        880
+      ],
+      "id": "0de1a8e2-2d16-44d5-b6d3-46133c15f09e",
+      "name": "Extract PDF text"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        432,
+        96
+      ],
+      "id": "f7b20d83-679f-4e39-916b-aa66a0fd1002",
+      "name": "Limit1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"message\": \"Вітаю з переходом до Freelance, Jeremiah! Твій досвід Ghostwriter для B2B засновників та CEO читається у твоїй роботі. Як тобі адаптуватися на новому місці?\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1696,
+        128
+      ],
+      "id": "8432ece7-cca0-4119-96c5-cd550ed8d616",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dba2f81e-1862-4471-9d11-702021ad1772",
+              "name": "signal",
+              "value": "change job",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1328,
+        16
+      ],
+      "id": "0a89b642-f9d4-4296-8d91-0e28ca29d9a2",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        640,
+        1008
+      ],
+      "id": "7dd83aeb-997d-4d0e-b6c7-24684cc5de24",
+      "name": "Limit2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ти - досвідчений технічний рекрутер. Оціни ОДНОГО кандидата проти ОДНІЄЇ вакансії і поверни СТРОГО JSON.\n\nВАКАНСІЯ (опис ролі):\n{{ $('Get a document1').item.json.content }}\n\nПРОФІЛЬ КАНДИДАТА (JSON з LinkedIn):\n{{ JSON.stringify($json) }}\n\nЗАВДАННЯ\n1. Виведи РІВНО 5 критеріїв найму прямо з опису вакансії (обовʼязкові навички, роки досвіду, домен, рівень, локація). Кожному признач вагу 0-1; сума ваг = 1.0. Must-have - найбільша вага.\n2. По кожному критерію постав бал 0-10 на основі ТІЛЬКИ профілю. На кожен бал додай дослівну цитату-доказ із профілю (поле about, headline, experience, skills). Немає доказу → бал 0 і цитата \"доказів не знайдено\". НІКОЛИ не вигадуй досвід, якого немає в JSON.\n3. Читай СМИСЛ, не ключові слова: \"розробляв на Пайтоні\" = Python-досвід.\n4. Must-have не закрито → це ВІДСІВ, жорстко занижуй загальний бал, а не \"майже підходить\".\n5. Порахуй загальний бал fit = round(сума(вага × бал) × 10), ціле 0-100.\n\n\nПОВЕРНИ СТРОГО ТАКИЙ JSON (без зайвого тексту, без markdown):\n{\n  \"fit\": 0-100,\n  \"verdict\": \"ЗАПРОСИТИ | МОЖЛИВО | ВІДСІВ\",\n  \"reason\": \"5 критеріїв через крапку з комою, кожен у форматі: Критерій (вага%) - бал/10 - цитата-доказ\",\n  \"account_data\": \"імʼя + headline + поточна посада + локація + ключові навички, одним рядком\"\n}\n\nПРАВИЛА ВЕРДИКТУ: ЗАПРОСИТИ якщо fit >= 70 і всі must-have закриті; МОЖЛИВО якщо fit 50-69; ВІДСІВ якщо fit < 50 або провалив must-have.\n",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1536,
+        880
+      ],
+      "id": "19f83374-0245-44df-b414-80041fe562ef",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5-nano",
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1552,
+        1104
+      ],
+      "id": "16555118-58a2-450c-85d7-5f235c636579",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3MkDZC34JPQxExFG",
+          "name": "Boxa"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ти пишеш коротке повідомлення кандидату від імені компанії Profigent. Це перший дотик у LinkedIn. Має бути ярко, тепло і просто - як пише жива людина, а не HR-бот.\n\nВХІД\nПрофіль кандидата (JSON):\n{{ JSON.stringify($json) }}\n\nОцінка кандидата (з попереднього кроку):\nfit: {{ $json.output.fit }}\nсильні сторони: {{ $json.output.reason }}\n\nЗАВДАННЯ\nНапиши повідомлення кандидату на основі ОДНІЄЇ конкретної сильної сторони з його профілю.\n\nСТРУКТУРА (4 короткі частини):\n1. Привітання + хто ми: \"Привіт, [Імʼя]! Це [твоє імʼя] з Profigent.\"\n2. Конкретний комплімент - зачепись за РЕАЛЬНУ деталь із профілю (проєкт, цифру, досвід), не загальну воду. Покажи, що читав профіль, а не розсилаєш шаблон.\n3. Чому пишемо: коротко звʼяжи його сильну сторону з роллю, яку шукаємо.\n4. Мʼякий заклик: запроси на коротку 15-хв розмову, питанням на яке легко сказати \"так\".\n\nПРАВИЛА\n- Жива розмовна мова, ніби пишеш знайомому. Тепло, але без підлабузництва.\n- ОДИН конкретний факт із профілю - не перелік усього.\n- Без тире (тільки дефіс з пробілами). Без емодзі. Без канцеляризмів (\"в рамках\", \"здійснити\", \"комунікація\").\n- До 70 слів. Коротше = краще.\n- Не обіцяй роботу і не кажи \"ти ідеально підходиш\" прямим текстом - покажи інтерес, а не вирок.\n- Мовою профілю кандидата (англ. профіль → англ. повідомлення).\n\nПОВЕРНИ СТРОГО JSON:\n{\n  \"message\": \"готовий текст повідомлення\"\n}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2048,
+        832
+      ],
+      "id": "0cc89239-0e4d-4b0c-8ec9-310072599f34",
+      "name": "Basic LLM Chain5"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5-nano",
+        "options": {
+          "responseFormat": "json_object"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        1104
+      ],
+      "id": "8737774f-2228-491c-b3e6-cd275cdfe54f",
+      "name": "OpenRouter Chat Model5",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3MkDZC34JPQxExFG",
+          "name": "Boxa"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"fit\": 90,\n\t\"verdict\": \"запросити\",\n  \"reason\":\"підходе по всіх крітеріяї\",\n  \"account_data\":\"Jeremiah Calica — Ghostwriter for B2B founders & CEOs — Copywriter (Freelance) — Philippines — Copywriting; Ghostwriting; Content Strategy; Lead Generation; Marketing\"\n  \n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1680,
+        1104
+      ],
+      "id": "fe2f2068-dbf7-4a42-886e-9b84c5bfa174",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "https://docs.google.com/document/d/1vqj1HE4LMkHKdiF2Qi5OwYcLVW4Be_WofAN5lfqYXQw/edit?tab=t.0"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        192,
+        1008
+      ],
+      "id": "1c275d00-dfdf-46da-8fcc-fe5815f3cce3",
+      "name": "Get a document1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "8Wk0AO4V3zPgWodI",
+          "name": "Google Docs account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0",
+          "mode": "list",
+          "cachedResultName": "Lesson_6_Candidates",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 222564563,
+          "mode": "list",
+          "cachedResultName": "3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1BbMSPR-mWSJ4CBXF1s3oiCQJ06Rx57QBw1GmkAbyCQ0/edit#gid=222564563"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "message": "={{ $json.message }}",
+            "fit": "={{ $('Basic LLM Chain1').item.json.output.fit }}",
+            "verdict": "={{ $('Basic LLM Chain1').item.json.output.verdict }}",
+            "reason": "={{ $('Basic LLM Chain1').item.json.output.reason }}",
+            "account_data": "={{ $('Extract PDF text').item.json.text }}",
+            "file_name": "={{ $('Loop CVs (funnel 3)').item.json.name }}",
+            "resume": "=https://drive.google.com/drive/u/0/folders/{{ $('Loop CVs (funnel 3)').item.json.id }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "resume",
+              "displayName": "resume",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "account_data",
+              "displayName": "account_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fit",
+              "displayName": "fit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "verdict",
+              "displayName": "verdict",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2240,
+        1008
+      ],
+      "id": "8cd6b0a2-ee6a-4e19-a94b-ef9ef39da775",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "51rukaxrOWQg284c",
+          "name": "Google Sheets bazasklad_makecomcred"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "65bfb9bb-73c6-448d-9754-e9b01b2e32f9",
+              "leftValue": "={{ $json.output.fit }}",
+              "rightValue": 75,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1840,
+        848
+      ],
+      "id": "2faddfe4-6c16-4ed0-92c1-5412c6822975",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain3": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule (раз на тиждень)": {
+      "main": [
+        [
+          {
+            "node": "Get leads (funnel 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get leads (funnel 2)": {
+      "main": [
+        [
+          {
+            "node": "Limit1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop leads (funnel 2)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Rescrape profile (funnel 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rescrape profile (funnel 2)": {
+      "main": [
+        [
+          {
+            "node": "IF company changed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF company changed": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop leads (funnel 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write congrats (funnel 2)": {
+      "main": [
+        [
+          {
+            "node": "Update signal (funnel 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter (funnel 2)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write congrats (funnel 2)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update signal (funnel 2)": {
+      "main": [
+        [
+          {
+            "node": "Loop leads (funnel 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule (funnel 3)": {
+      "main": [
+        [
+          {
+            "node": "Get a document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List PDFs in folder": {
+      "main": [
+        [
+          {
+            "node": "Limit2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop CVs (funnel 3)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download CV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download CV": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF text": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit1": {
+      "main": [
+        [
+          {
+            "node": "Loop leads (funnel 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Write congrats (funnel 2)",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Write congrats (funnel 2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit2": {
+      "main": [
+        [
+          {
+            "node": "Loop CVs (funnel 3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain5",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a document1": {
+      "main": [
+        [
+          {
+            "node": "List PDFs in folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain5": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop CVs (funnel 3)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "30207fbd-ed52-4d9c-bd73-9ab1e713a278",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "nodeGroups": [],
+  "id": "nxhFi9DkQoMyQKxu",
+  "tags": []
+}
