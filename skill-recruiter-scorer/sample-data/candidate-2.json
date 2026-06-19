@@ -1,0 +1,27 @@
+{
+  "basic_info": {
+    "first_name": "Ірина",
+    "last_name": "М.",
+    "public_identifier": "iryna-m",
+    "headline": "Frontend Developer · React · шукаю backend-челенджі",
+    "about": "3 роки роблю фронтенд на React. Цього року почала вчити Python, зробила пет-проєкт на FastAPI. Хочу рости в бік backend.",
+    "top_skills": ["React", "JavaScript", "TypeScript", "Python (навчаюсь)", "FastAPI"]
+  },
+  "experience": [
+    {
+      "title": "Frontend Developer",
+      "company": "Product-компанія",
+      "start_date": "2023",
+      "end_date": "Present",
+      "description": "React, TypeScript, інтеграція з REST-API. Пет-проєкт на FastAPI для портфоліо."
+    },
+    {
+      "title": "Junior Frontend",
+      "company": "Аутсорс",
+      "start_date": "2022",
+      "end_date": "2023",
+      "description": "Верстка, React-компоненти."
+    }
+  ],
+  "education": []
+}

@@ -1,0 +1,15 @@
+{
+  "basic_info": {
+    "first_name": "Олег", "last_name": "К.",
+    "public_identifier": "oleg-k",
+    "headline": "Backend-розробник, будую API, які не падають",
+    "about": "7 років серверної розробки. Більшість часу розробляв на Пайтоні, останні роки на Go. Був черговим по сервісах (on-call), 30к запитів за хвилину норма.",
+    "top_skills": ["Python","Go","PostgreSQL","REST API","Docker"]
+  },
+  "experience": [
+    {"title":"Senior Backend Engineer","company":"FinTech-стартап","start_date":"2022","end_date":"Present","description":"REST-API платіжного сервісу ~30k rpm, Postgres, менторив джунів. Go, трохи Python."},
+    {"title":"Backend Developer","company":"Logistics SaaS","start_date":"2018","end_date":"2022","description":"Сервіси на Пайтоні (Django, FastAPI), Postgres, Redis."},
+    {"title":"Junior Developer","company":"Web-студія","start_date":"2017","end_date":"2018","description":"Сайти на Python."}
+  ],
+  "education": []
+}
