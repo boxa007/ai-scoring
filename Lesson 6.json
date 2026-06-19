@@ -88,7 +88,7 @@
     },
     {
       "parameters": {
-        "url": "=https://api.apify.com/v2/actors/harvestapi~linkedin-profile-scraper/run-sync-get-dataset-items?token=apify_api_sryB1f49a4ZNjk1dOowaFPlfYNhfSE2UWTVs",
+        "url": "=https://api.apify.com/v2/actors/harvestapi~linkedin-profile-scraper/run-sync-get-dataset-items?token=",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n    \"profileScraperMode\": \"Profile details no email ($4 per 1k)\",\n    \"queries\": [\n        \"{{ $json.linkedin }}\"\n    ]\n}",
@@ -425,7 +425,7 @@
     },
     {
       "parameters": {
-        "url": "=https://api.apify.com/v2/actors/harvestapi~linkedin-profile-scraper/run-sync-get-dataset-items?token=apify_api_sryB1f49a4ZNjk1dOowaFPlfYNhfSE2UWTVs",
+        "url": "=https://api.apify.com/v2/actors/harvestapi~linkedin-profile-scraper/run-sync-get-dataset-items?token=",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n    \"profileScraperMode\": \"Profile details no email ($4 per 1k)\",\n    \"queries\": [\n        \"{{ $json.linkedin }}\"\n    ]\n}",
