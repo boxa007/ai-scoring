@@ -1,0 +1,5 @@
+# Список лідів - LinkedIn-посилання кандидатів, по одному в рядок.
+# Рядки з # ігноруються. Підтримує повний URL або слаг.
+https://www.linkedin.com/in/some-candidate-1/
+https://www.linkedin.com/in/some-candidate-2/
+https://www.linkedin.com/in/some-candidate-3/
